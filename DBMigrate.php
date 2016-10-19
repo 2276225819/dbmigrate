@@ -11,7 +11,7 @@ class DBMigrate {
     private $column; 
     private $prefix;
     public function __construct($pdo,$column=array()){ 
-        if( empty($pdo) || empty($pdo instanceof \PDO) )
+        if( empty($pdo) || $pdo instanceof \PDO )
             throw new Exception("DBMigrate Error: PDO Request", 1);
         $this->prefix='';  
         $this->keys= array(
