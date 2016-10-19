@@ -24,8 +24,13 @@ class DBMigrate {
 
 
     public $last_table='_';
-    public $log;
-    public function __call($name,$args){  
+    public $log=array();
+    public function __call($name,$args){   
+        //laravel
+        if($name=='string') $name = 'varchar';
+        if($name=='integer') $name = 'int';
+        if($name=='increments') $name = 'increment';
+
         if($name=='table'){
             $this->last_table=$args[0]; 
             if(isset($args[1])){  
@@ -56,21 +61,22 @@ class DBMigrate {
             $this->column[$ntable][$index] .= " {$name} ".var_export($args[0],true); 
             return $this;
         }
-    } 
-    
+    }  
     public function clean($before=null){
         if(!empty($before) && is_callable($before))
             $before($this);   
         foreach ($this->column as $table => $col) { 
+            if($table=='_')
+                continue;
             $col = array_map(function($v){
                 list($n)=explode(' ',$v);
                 return $n;
             },$col); 
-            $result = array_column($this->query("desc $table"),0);  
+            $result = array_column($this->_query("show columns from $table"),0);  
             foreach ($result as $isset) { 
                 if(!in_array($isset,$col)){
                     $str= "alter table {$table} drop {$isset}";
-                    $this->exec($str);
+                    $this->_exec($str);
                 } 
             }
         } 
@@ -79,27 +85,29 @@ class DBMigrate {
     public function sync($before=null){
         if(!empty($before) && is_callable($before))
             $before($this);    
-        $tables = array_column($this->query('show tables'),0); 
+        $tables = array_column($this->_query('show tables'),0); 
         foreach ($this->column as $table => $col) {
+            if($table=='_')
+                continue;
             if(in_array($table,$tables))
-                $this->alterTable($table,$col); 
+                $this->_alterTable($table,$col); 
             else
-                $this->createTable($table,$col);
+                $this->_createTable($table,$col);
         } 
         return $this;
     }  
  
-    function query($sql,$args=array()){
-        return $this->exec($sql,$args)->fetchAll(); 
+    function _query($sql,$args=array()){
+        return $this->_exec($sql,$args)->fetchAll(); 
     }
-    function exec($sql,$args=array()){ 
+    function _exec($sql,$args=array()){ 
         $pdo = @$this->pdo;
         $pf  = @$this->prefix?:'';   
         $sql = preg_replace(
                 array('/((?:join|into|from|create table|alter table|as)\s+)([\w]+)/' ,
                         '/(\w+)\s+(read|write|set)/',
                         '(\w+\.[\w\*]+)'),
-                array("$1 $pf$2","$pf$0" ,"$pf$0"), $sql );    
+                array("$1 `$pf$2`","`$pf$0`" ,"`$pf$0`"), $sql );    
         $query = $pdo->prepare($sql); 
         $res = $query->execute($args);  
         @$this->log[]=$sql; 
@@ -109,7 +117,7 @@ class DBMigrate {
         }  
         return $query; 
     } 
-    function createTable($table,$column ){   
+    function _createTable($table,$column ){   
         $str = "create table {$table}(\n   ";
         foreach ($column as $key =>$value){
             //preg_match('/[^ ]+(.+)/',$value,$arr); 
@@ -117,10 +125,10 @@ class DBMigrate {
             if(empty($_tag)) $_tag=",\n   ";  
         }
         $str.="\n);";    
-        return $this->exec($str);  
+        return $this->_exec($str);  
     }
-    function alterTable($table,$column ){   
-        $result = $this->query("desc $table");
+    function _alterTable($table,$column ){   
+        $result = $this->_query("show columns from $table");
         $tps = array_column($result ,1); 
         $fns = array_column($result ,0);
         $fns = array_flip($fns);
@@ -130,11 +138,11 @@ class DBMigrate {
             if( isset($fns[$name]) ){  
                 if( !strstr($tps[$fns[$name]],$type) ){ 
                     $str = "alter table {$table} change $name $value;\n";  
-                    $this->exec($str);
+                    $this->_exec($str);
                 }
             }else{
                 $str = "alter table {$table} add  $value;\n";  
-                $this->exec($str);
+                $this->_exec($str);
             } 
         }  
     } 
