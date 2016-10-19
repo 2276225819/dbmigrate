@@ -9,15 +9,33 @@ class DBMigrate {
     private $exts;
     private $keys;
     private $column; 
+    private $prefix;
     public function __construct($pdo,$column=array()){ 
         if( empty($pdo) || empty($pdo instanceof \PDO) )
-            throw new Exception("PDO Request", 1);
-            
+            throw new Exception("DBMigrate Error: PDO Request", 1);
+        $this->prefix='';  
         $this->keys= array(
-            'int','text','date','time','datetime','tinyint',
-            'varchar','char',  'decimal','double', 
+            'int'=> 'int',
+            'integer'=> 'int',
+            'tinyint'=> 'tinyint',
+            'bigint'=> 'bigint',
+            
+            'decimal'=> 'decimal',
+            'double'=> 'double', 
+
+            'date'=> 'date',
+            'time'=> 'time',
+            'datetime'=> 'datetime',
+
+            'varchar'=> 'varchar',
+            'string'=> 'varchar',
+            'text'=> 'text',
+            'char'=> 'char',
         ); 
-        $this->exts = array('comment','default');
+        $this->exts = array(
+            'comment'=> 'comment',
+            'default'=> 'default',
+        );
         $this->pdo = $pdo;
         $this->column=$column;
     }
@@ -26,11 +44,7 @@ class DBMigrate {
     public $last_table='_';
     public $log=array();
     public function __call($name,$args){   
-        //laravel
-        if($name=='string') $name = 'varchar';
-        if($name=='integer') $name = 'int';
-        if($name=='increments') $name = 'increment';
-
+        //laravel  
         if($name=='table'){
             $this->last_table=$args[0]; 
             if(isset($args[1])){  
@@ -45,23 +59,35 @@ class DBMigrate {
         if($ntable = @$this->last_table );else{
             return $this; 
         } 
-        if($name == 'increment'){   
+        if($name == 'increment' || $name =='increments'){   
             $str = array_shift($args)." int auto_increment primary key";
             $this->column[$ntable][]=$str; 
             return $this;
         }      
-        if( in_array($name,$this->keys) ){ 
-            $str = array_shift($args).' '.$name;
+        if( isset( $this->keys[$name] ) ){ 
+            $str = array_shift($args).' '.$this->keys[$name];
             if($args) $str.='('.join($args,',').')';
             $this->column[$ntable][]=$str; 
             return $this;
         }   
-        if( in_array($name,$this->exts) ){
+        if( isset( $this->exts[$name] )){
             $index = count($this->column[$ntable])-1; 
-            $this->column[$ntable][$index] .= " {$name} ".var_export($args[0],true); 
+            $this->column[$ntable][$index] .= " {$this->keys[$name]} ".var_export($args[0],true); 
             return $this;
         }
     }  
+    public function pre($prefix){
+        $this->prefix=$prefix;
+        return $this;
+    }
+    public function key($n,$k){
+        if(isset($n)){
+            if(is_array($n)) $args = $n;
+            else $args = array($n,$k); 
+            $this->keys=array_merge($this->keys,$args); 
+        } 
+        return $this;
+    }
     public function clean($before=null){
         if(!empty($before) && is_callable($before))
             $before($this);   
@@ -113,7 +139,7 @@ class DBMigrate {
         @$this->log[]=$sql; 
         if(empty($res)) {
             list($c,$n,$d)=$query->errorInfo();
-            throw new Exception($d, 1); 
+            throw new Exception("DBMigrate Error:".$d, 1); 
         }  
         return $query; 
     } 
@@ -137,11 +163,11 @@ class DBMigrate {
             list($name,$type) = explode(' ',$value);   
             if( isset($fns[$name]) ){  
                 if( !strstr($tps[$fns[$name]],$type) ){ 
-                    $str = "alter table {$table} change $name $value;\n";  
+                    $str = "alter table {$table} change $name $value; -- old: {$tps[$fns[$name]]}";  
                     $this->_exec($str);
                 }
             }else{
-                $str = "alter table {$table} add  $value;\n";  
+                $str = "alter table {$table} add  $value; ";  
                 $this->_exec($str);
             } 
         }  
