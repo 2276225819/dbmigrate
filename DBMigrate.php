@@ -10,6 +10,7 @@ class DBMigrate {
     private $keys;
     private $column; 
     private $prefix;
+    private $ischeck=false;
     public function __construct($pdo,$column=array()){ 
         if( empty($pdo) || !($pdo instanceof \PDO) )
             throw new Exception("DBMigrate Error: PDO Request", 1);
@@ -81,6 +82,10 @@ class DBMigrate {
         $this->prefix=$prefix;
         return $this;
     }
+    public function check(){
+        $this->ischeck=true;
+        return $this;
+    }
     public function key($n,$k){
         if(isset($n)){
             if(is_array($n)) $args = $n;
@@ -126,7 +131,7 @@ class DBMigrate {
     function _query($sql,$args=array()){
         return $this->_exec($sql,$args)->fetchAll(); 
     }
-    function _exec($sql,$args=array()){ 
+    function _exec($sql,$args=array(),$check=false){ 
         $pdo = @$this->pdo;
         $pf  = @$this->prefix?:'';   
         $sql = preg_replace(
@@ -134,14 +139,17 @@ class DBMigrate {
                         '/(\w+)\s+(read|write|set)/',
                         '(\w+\.[\w\*]+)'),
                 array("$1 `$pf$2`","`$pf$0`" ,"`$pf$0`"), $sql );    
+                
+        @$this->log[]=$sql;
+        if($check) return true; 
+
         $query = $pdo->prepare($sql); 
-        $res = $query->execute($args);  
-        @$this->log[]=$sql; 
+        $res = $query->execute($args);   
         if(empty($res)) {
             list($c,$n,$d)=$query->errorInfo();
             throw new Exception("DBMigrate Error:".$d, 1); 
         }  
-        return $query; 
+        return $query;  
     } 
     function _createTable($table,$column ){   
         $str = "create table {$table}(\n   ";
@@ -151,7 +159,7 @@ class DBMigrate {
             if(empty($_tag)) $_tag=",\n   ";  
         }
         $str.="\n);";    
-        return $this->_exec($str);  
+        return $this->_exec($str,array(),$this->ischeck);  
     }
     function _alterTable($table,$column ){   
         $result = $this->_query("show columns from $table");
@@ -164,11 +172,11 @@ class DBMigrate {
             if( isset($fns[$name]) ){  
                 if( !strstr($tps[$fns[$name]],$type) ){ 
                     $str = "alter table {$table} change $name $value; -- old: {$tps[$fns[$name]]}";  
-                    $this->_exec($str);
+                    $this->_exec($str,array(),$this->ischeck);  
                 }
             }else{
                 $str = "alter table {$table} add  $value; ";  
-                $this->_exec($str);
+                $this->_exec($str,array(),$this->ischeck);  
             } 
         }  
     } 
