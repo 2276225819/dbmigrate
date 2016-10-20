@@ -11,7 +11,7 @@ class DBMigrate {
     private $column; 
     private $prefix;
     public function __construct($pdo,$column=array()){ 
-        if( empty($pdo) || $pdo instanceof \PDO )
+        if( empty($pdo) || !($pdo instanceof \PDO) )
             throw new Exception("DBMigrate Error: PDO Request", 1);
         $this->prefix='';  
         $this->keys= array(
@@ -48,7 +48,8 @@ class DBMigrate {
         if($name=='table'){
             $this->last_table=$args[0]; 
             if(isset($args[1])){  
-                $this->column[$args[0]] = array_merge(
+                if(is_callable($args[1]))$args[1]($this);
+                else $this->column[$args[0]] = array_merge(
                     @(array)$this->column[$args[0]], 
                     array_filter(preg_split("/[,\r\n\t][ \r\n\t]+/",$args[1]))
                 ); 
@@ -72,7 +73,7 @@ class DBMigrate {
         }   
         if( isset( $this->exts[$name] )){
             $index = count($this->column[$ntable])-1; 
-            $this->column[$ntable][$index] .= " {$this->keys[$name]} ".var_export($args[0],true); 
+            $this->column[$ntable][$index] .= " {$this->exts[$name]} ".var_export($args[0],true); 
             return $this;
         }
     }  
@@ -111,11 +112,10 @@ class DBMigrate {
     public function sync($before=null){
         if(!empty($before) && is_callable($before))
             $before($this);    
-        $tables = array_column($this->_query('show tables'),0); 
+        $tables = array_column($this->_query('show tables'),0);  
         foreach ($this->column as $table => $col) {
-            if($table=='_')
-                continue;
-            if(in_array($table,$tables))
+            if($table=='_')continue;
+            if(in_array($this->prefix.$table,$tables))
                 $this->_alterTable($table,$col); 
             else
                 $this->_createTable($table,$col);
