@@ -11,11 +11,12 @@ class DBMigrate {
     private $column; 
     private $prefix;
     private $ischeck=false;
-    public function __construct($pdo,$column=array()){ 
+    public function __construct($pdo,$config=array()){ 
         if( empty($pdo) || !($pdo instanceof \PDO) )
             throw new Exception("DBMigrate Error: PDO Request", 1);
-        $this->prefix='';  
-        $this->keys= array(
+        $this->pdo = $pdo;
+        $this->prefix = $config['prefix']?:'';  
+        $this->keys  = array_merge((array)@$config['keys'],array(
             'int'=> 'int',
             'integer'=> 'int',
             'tinyint'=> 'tinyint',
@@ -32,13 +33,12 @@ class DBMigrate {
             'string'=> 'varchar',
             'text'=> 'text',
             'char'=> 'char',
-        ); 
-        $this->exts = array(
+        )); 
+        $this->exts = array_merge((array)@$config['keys'],array(
             'comment'=> 'comment',
             'default'=> 'default',
-        );
-        $this->pdo = $pdo;
-        $this->column=$column;
+        ));
+        $this->column=(array)@$config['column'];
     }
 
 
@@ -126,8 +126,22 @@ class DBMigrate {
                 $this->_createTable($table,$col);
         } 
         return $this;
-    }  
+    }   
+    public function truncate($before=null){
+        if(!empty($before) && is_callable($before))
+            $before($this);   
+        foreach ($this->column as $table => $col) { 
+            if($table=='_')
+                continue;
+            $this->_exec("truncate $table");
+        } 
+        return $this; 
+    }
  
+    public function export(){
+        return var_export($this->column,true); 
+    }
+   
     function _query($sql,$args=array()){
         return $this->_exec($sql,$args)->fetchAll(); 
     }
