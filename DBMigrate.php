@@ -77,21 +77,9 @@ class DBMigrate {
             $this->column[$ntable][$index] .= " {$this->exts[$name]} ".var_export($args[0],true); 
             return $this;
         }
-    }  
-    public function pre($prefix){
-        $this->prefix=$prefix;
-        return $this;
     }
     public function check(){
         $this->ischeck=true;
-        return $this;
-    }
-    public function key($n,$k){
-        if(isset($n)){
-            if(is_array($n)) $args = $n;
-            else $args = array($n,$k); 
-            $this->keys=array_merge($this->keys,$args); 
-        } 
         return $this;
     }
     public function clean($before=null){
