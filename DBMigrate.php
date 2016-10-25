@@ -152,11 +152,10 @@ class DBMigrate {
                 array('/((?:join|into|from|create table|alter table|as)\s+)([\w]+)/' ,
                         '/(\w+)\s+(read|write|set)/',
                         '(\w+\.[\w\*]+)'),
-                array("$1 `$pf$2`","`$pf$0`" ,"`$pf$0`"), $sql );    
+                array("$1 `$pf$2`","`$pf$1` $2" ,"`$pf$0`"), $sql );    
                 
         @$this->log[]=$sql;
         if($check) return true; 
-
         $query = $pdo->prepare($sql); 
         $res = $query->execute($args);   
         if(empty($res)) {
