@@ -34,7 +34,7 @@ class DBMigrate {
             'text'=> 'text',
             'char'=> 'char',
         )); 
-        $this->exts = array_merge((array)@$config['keys'],array(
+        $this->exts = array_merge((array)@$config['exts'],array(
             'comment'=> 'comment',
             'default'=> 'default',
         ));
