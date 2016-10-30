@@ -15,8 +15,8 @@ class DBMigrate {
         if( empty($pdo) || !($pdo instanceof \PDO) )
             throw new Exception("DBMigrate Error: PDO Request", 1);
         $this->pdo = $pdo;
-        $this->prefix = $config['prefix']?:'';  
-        $this->keys  = array_merge((array)@$config['keys'],array(
+        $this->prefix = isset($config['prefix'])?$config['prefix']:'';  
+        $this->keys  = array(
             'int'=> 'int',
             'integer'=> 'int',
             'tinyint'=> 'tinyint',
@@ -33,32 +33,42 @@ class DBMigrate {
             'string'=> 'varchar',
             'text'=> 'text',
             'char'=> 'char',
-        )); 
-        $this->exts = array_merge((array)@$config['exts'],array(
+        ); 
+        $this->exts = array(
             'comment'=> 'comment',
             'default'=> 'default',
-        ));
-        $this->column=(array)@$config['column'];
+        );
+        $this->column = array(); 
+
+        if(isset($config['column']))
+            $this->column = array_merge($this->column, $config['column']);  
+        if(isset($config['keys']))
+            $this->keys = array_merge($this->keys, $config['keys']); 
+        if(isset($config['exts']))
+            $this->exts = array_merge($this->exts,$config['exts']); 
     }
 
 
     public $last_table='_';
-    public $log=array();
     public function __call($name,$args){   
         //laravel  
         if($name=='table'){
             $this->last_table=$args[0]; 
             if(isset($args[1])){  
-                if(is_callable($args[1]))$args[1]($this);
-                else $this->column[$args[0]] = array_merge(
-                    @(array)$this->column[$args[0]], 
-                    array_filter(preg_split("/[,\r\n\t][ \r\n\t]+/",$args[1]))
-                ); 
+                if(is_callable($args[1])) $args[1]($this);
+                else{
+                    if(empty($this->column[$args[0]]))
+                        $this->column[$args[0]]=array();
+                    $this->column[$args[0]] = array_merge(
+                        $this->column[$args[0]], 
+                        array_filter(preg_split("/[,\r\n\t][ \r\n\t]+/",$args[1]))
+                    );  
+                } 
             }
             return $this;
         }
         //if(empty($ntable=$this->last_table)){...}
-        if($ntable = @$this->last_table );else{
+        if($ntable = $this->last_table );else{
             return $this; 
         } 
         if($name == 'increment' || $name =='increments'){   
@@ -133,16 +143,18 @@ class DBMigrate {
     function _query($sql,$args=array()){
         return $this->_exec($sql,$args)->fetchAll(); 
     }
+    
+    public $log=array();
     function _exec($sql,$args=array(),$check=false){ 
-        $pdo = @$this->pdo;
-        $pf  = @$this->prefix?:'';   
+        $pdo = $this->pdo;
+        $pf  = $this->prefix;   
         $sql = preg_replace(
                 array('/((?:join|into|from|create table|alter table|as)\s+)([\w]+)/' ,
                         '/(\w+)\s+(read|write|set)/',
                         '(\w+\.[\w\*]+)'),
                 array("$1 `$pf$2`","`$pf$1` $2" ,"`$pf$0`"), $sql );    
                 
-        @$this->log[]=$sql;
+        $this->log[]=$sql;
         if($check) return true; 
         $query = $pdo->prepare($sql); 
         $res = $query->execute($args);   
@@ -154,9 +166,9 @@ class DBMigrate {
     } 
     function _createTable($table,$column ){   
         $str = "create table {$table}(\n   ";
-        foreach ($column as $key =>$value){
-            //preg_match('/[^ ]+(.+)/',$value,$arr); 
-            $str.=@$_tag.$value;//arr[1];
+        $_tag='';
+        foreach ($column as $key =>$value){ 
+            $str.= $_tag.$value;//arr[1];
             if(empty($_tag)) $_tag=",\n   ";  
         }
         $str.="\n);";    

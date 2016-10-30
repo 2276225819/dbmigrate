@@ -71,13 +71,8 @@
         ->varchar('password',32) //->comment('密码')//不需要可用注释掉
     ;//链式操作结束
     $dbm->sync();//同步数据库
-    
     print_r($dbm->log);//输出数据库操作记录
-    //create table user(
-    //  id int auto_increment primary key,
-    //  username varchar(32),
-    //  password varchar(32) 
-    //);
+    
 ## TODO
 回迁记录
 回迁功能（撤销
