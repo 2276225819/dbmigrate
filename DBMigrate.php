@@ -161,8 +161,7 @@ class DBMigrate {
             $this->_exec("truncate $table");
         } 
         return $this; 
-    }
- 
+    } 
     public function export(){
         return var_export($this->tables,true); 
     }
