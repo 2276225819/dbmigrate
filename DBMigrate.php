@@ -156,7 +156,7 @@ class DBMigrate {
     public function truncate($before=null){
         if(!empty($before) && is_callable($before))
             $before($this);   
-        foreach ($this->tables as $table => $col) { 
+        foreach ($this->tables as $table => $col) {  
             if($table=='_')  continue;
             $this->_exec("truncate $table");
         } 
@@ -175,7 +175,7 @@ class DBMigrate {
         $pdo = $this->pdo;
         $pf  = $this->prefix;   
         $sql = preg_replace(
-                array('/((?:join|into|from|create table|alter table|as)\s+)([\w]+)/' ,
+                array('/((?:join|truncate|into|from|create table|alter table|as)\s+)([\w]+)/' ,
                         '/(\w+)\s+(read|write|set)/',
                         '(\w+\.[\w\*]+)'),
                 array("$1 `$pf$2`","`$pf$1` $2" ,"`$pf$0`"), $sql );    
