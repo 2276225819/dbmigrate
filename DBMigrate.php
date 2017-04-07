@@ -234,5 +234,23 @@ class DBMigrate {
             } 
         }  
     } 
- 
+    
+
+
+    public function bulidBlurPoint($file){ 
+        $query = $this->_exec("show tables");
+
+        foreach ($query as $key => $value) {
+            $q = $this->_exec("show create table {$value[0]}");
+            $row = $q->fetch(); 
+            print_r(new TableBlock($row[1])); 
+        }
+
+    }
+
+
+
+
+
+
 }
