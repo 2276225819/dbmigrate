@@ -2,7 +2,8 @@
 
 class DB{ 
     public $pdo;
-    public $log=array();
+    public $log=[];
+	public $args=[];
     public function __construct(\PDO $pdo,$pf=''){
         $this->pdo = $pdo;
         $this->prefix = $pf; 
@@ -45,62 +46,19 @@ class DB{
                 array('/((?:join|truncate|into|from|create table|alter table|as)\s+)([\w]+)/' ,
                         '/(\w+)\s+(read|write|set)/',  '(\w+\.[\w\*]+)'),
                 array("$1 `$pf$2`","`$pf$1` $2" ,"`$pf$0`"), $sql );    
-                
+        $this->args = array_merge($this->args,$args);
         $this->log[]=$sql;
         if($check) return true; 
         $query = $pdo->prepare($sql); 
-        $res = $query->execute($this->args??$args);   
-        unset($this->args);
+        $res = $query->execute($this->args);   
+        $this->args=[];
         if(empty($res)) {
             list($c,$n,$d)=$query->errorInfo();
             throw new Exception("Error:".$d, 1); 
         }  
         return $query;  
     } 
-    public function _createTable($table,$column ){   
-        $str = "create table {$table}(\n   ";
-        $ext="";
-        $_tag1=$_tag2='';
-        foreach ($column as $key =>$value){ 
-            if(!is_numeric($key)){
-                $ext.="$_tag1 $key=$value "; 
-                if(empty($_tag1)) $_tag1=",  "; 
-            }else{
-                $str.= $_tag2.$value;//arr[1];
-                if(empty($_tag2)) $_tag2=",\n   ";   
-            }
-        }
-        $str.="\n) $ext ;";    
-        return $this->q($str,array(),$this->ischeck);  
-    }
-    public function _alterTable($table,$column ){   
-        $result = $this->_query("show columns from $table");
-        $format = $this->_query("show create table $table");
-        $format = $format[0]["Create Table"];//
-        $tps = array_column($result ,1); 
-        $fns = array_column($result ,0);
-        $fns = array_flip($fns);
-
-        foreach ($column as $key => $value){ 
-            if(!is_numeric($key)){  
-                if(stristr($format,"$key=$value")===false){
-                    $str = "alter table {$table} $key $value;";   
-                    $this->q($str,array(),$this->ischeck);   
-                } 
-                continue;
-            }
-            list($name,$type) = explode(' ',$value);   
-            if( isset($fns[$name]) ){  
-                if( !strstr($tps[$fns[$name]],$type) ){ 
-                    $str = "alter table {$table} change $name $value; -- old: {$tps[$fns[$name]]}";  
-                    $this->q($str,array(),$this->ischeck);  
-                }
-            }else{
-                $str = "alter table {$table} add  $value; ";  
-                $this->q($str,array(),$this->ischeck);  
-            } 
-        }  
-    }    
+ 
 }
 
 // $d = new DB(new PDO("mysql:dbname=test","root","root"));    
