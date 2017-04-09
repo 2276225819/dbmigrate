@@ -1,4 +1,5 @@
-<?php namespace Mimix;
+<?php namespace DBMigrate;
+use \PDO;
 
 class DBSync{ 
 

@@ -1,4 +1,4 @@
-<?php namespace Mimix;
+<?php namespace DBMigrate;
 
 class TableBlock{
  

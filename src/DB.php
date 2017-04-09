@@ -1,10 +1,12 @@
-<?php namespace Mimix;
+<?php namespace DBMigrate;
+use \PDO;
+use \Exception;
 
 class DB{ 
     public $pdo;
     public $log=[];
 	public $args=[];
-    public function __construct(\PDO $pdo,$pf=''){
+    public function __construct(PDO $pdo,$pf=''){
         $this->pdo = $pdo;
         $this->prefix = $pf; 
     }
