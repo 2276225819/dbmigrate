@@ -1,4 +1,5 @@
-<?php 
+<?php namespace Mimix;
+
 class DB{ 
     public $pdo;
     public $log=array();
