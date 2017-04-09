@@ -62,7 +62,7 @@ class DB{
 }
 
 // $d = new DB(new PDO("mysql:dbname=test","root","root"));    
-// print_r($d->insert_delayed("d_model".$d->bulidValues(array(
+// print_r($d->q("insert d_model".$d->bulidValues(array(
 //     'ID'=>2
 // ))));
  

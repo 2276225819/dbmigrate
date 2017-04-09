@@ -6,7 +6,7 @@ class DBSync{
     public $file; 
 	public $debug;
     public $tables;
-    public function __construct($file=__DIR__.'/temp.sql',$debug=false){  
+    public function __construct($file=__DIR__.'/../temp.sql',$debug=false){  
         $this->file=$file;    
 		$this->debug=$debug;  
 		
