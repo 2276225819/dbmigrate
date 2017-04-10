@@ -2,6 +2,14 @@
     "name": "2276225819/dbmigrate",
     "description": "database migrate", 
     "autoload":{
-        "files":["DBMigrate.php"]
+        "psr-4": {
+            "DBMigrate\\":"./src/"
+        }
+    },
+    "repositories": {
+        "packagist": {
+            "type": "composer",
+            "url": "https://packagist.phpcomposer.com"
+        }
     }
 }
