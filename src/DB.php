@@ -41,7 +41,7 @@ class DB{
         }  
         return " (".substr($sql1,1)." )VALUES".substr($sql2,1)."";  
     } 
-    public function q($sql,$args=array(),$check=false) : PDOStatement{ 
+    public function q($sql,$args=array(),$check=false){ 
         $pdo = $this->pdo;
         $pf  = $this->prefix;   
         $sql = preg_replace(

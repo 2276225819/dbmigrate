@@ -49,8 +49,8 @@ class TableBlock{
         if(empty($arr)) return; 
 
         $offset += strlen($arr[0]) ; 
-        $arr[2]=preg_split('/,(?=[^\d`])/',$arr[2]);
-        foreach ($arr[2] as $key => $value)
+        $arrs=preg_split('/,(?=[^\d`])/',$arr[2]);
+        foreach ($arrs as $key => $value)
             $cols[] = trim($value);  
         return new self($arr[1],$cols,$arr[3]); 
     }
@@ -84,11 +84,14 @@ class TableBlock{
 		}  
 
 		foreach ($this->attrs as $name => $value) { 
-			if($remote->attrs[$name]!=$value)
+			if(empty($remote->attrs[$name]) || $remote->attrs[$name]!=$value)
 				$sql[]="alter table `{$this->name}` $name=$value";
 		}
 
-
+		// foreach ($this->index as $name => $value) { 
+		// 	if(empty($remote->index[$name]) || trim($remote->index[$name])!=trim($value))
+		// 		$sql[]="alter table `{$this->name}` add $value";
+		// }
 		$diff = array_diff($this->index,$remote->index);
 		foreach ($diff as $key) {
 			$sql[] = "alter table `{$this->name}` add {$key};";

@@ -10,12 +10,12 @@ class DBSync{
     public function __construct($file=__DIR__.'/../temp.sql',$debug=false){  
         $this->file=$file;    
 		$this->debug=$debug;  
-		
-		$txt = file_get_contents($this->file);  
-        $offset = 0; 
-        while($table = TableBlock::read($txt,$offset)) 
-            $this->tables[$table->name] = $table;  
-
+		if(file_exists($file)){ 
+            $txt = file_get_contents($this->file);  
+            $offset = 0; 
+            while($table = TableBlock::read($txt,$offset)) 
+                $this->tables[$table->name] = $table;  
+        } 
     }   
 
     /** 
