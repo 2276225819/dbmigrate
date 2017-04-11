@@ -78,7 +78,7 @@ class TableBlock{
 				continue;
 			}
 			if($remote->cols[$name]!=$col){
-				$sql[]="alter table `{$this->name}` change `$name`  {$col};";
+				$sql[]="alter table `{$this->name}` change `$name`  {$col}; -- {$remote->cols[$name]}";
 				continue;
 			}
 		}  
@@ -108,7 +108,7 @@ class TableBlock{
 		}  
 		$diff = array_diff($this->index,$local->index);
 		foreach ($diff as $key) {
-			preg_match('/KEY `?\S+`?/',$key,$arr);
+			preg_match('/PRIMARY KEY|KEY `?\S+`?/',$key,$arr);
 			$sql[] = "alter table `{$this->name}` drop {$arr[0]};";
 		}
 

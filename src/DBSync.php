@@ -34,6 +34,11 @@ class DBSync{
 		foreach ($this->db->q("show tables") as $key => $value) { 
             $row = $this->db->row("show create table {$value[0]}");  
             $t = TableBlock::read($row[1]);  
+
+            //TODO: 过滤熟悉
+            unset($t->attrs['AUTO_INCREMENT']);
+            unset($t->attrs['ROW_FORMAT']); 
+
 			$tables[$t->name]=$t;
 		}
 		return $tables;
@@ -59,13 +64,15 @@ class DBSync{
 	 * @return string[] 
 	 */
 	public function diff($focus=false){   
-		$tables = $this->loadrt(); 
+		$tables = $this->loadrt(); 		
+        //print_r($tables);exit;
+        if($focus)foreach($tables as $tn=>$table){
+			$qs = array_merge($qs??[],$table->clearFrom($this->tables[$tn]??null));  
+		}
 		foreach ($this->tables as $tn => $table) { 
 			$qs = array_merge($qs??[],$table->diffFrom($tables[$tn]??null)); 
 		}  
-		if($focus)foreach($tables as $tn=>$table){
-			$qs = array_merge($qs??[],$table->clearFrom($this->tables[$tn]??null));  
-		}
+
 		return $qs??[];
 	}
  
@@ -94,6 +101,11 @@ class DBSync{
 			$this->db->q($value);  
 		return count($qs);
     } 
+
+
+    public function command(){
+        
+    }
 }
 
 // $db = new DBSync(__DIR__."/dd.sql");  
