@@ -2,10 +2,10 @@
 
 class TableBlock{
  
-    public $name="";//create table ""
-    public $attrs="";//ENGINE="" AUTO_INCREMENT="" CHARSET=""
-    public $index=[];//UNIQUE KEY `` (``)
-    public $cols=[];//["id int ","name varchar"]
+    public $name ="";//"table"
+    public $attrs=[];//["ENGINE"=>"","AUTO_INCREMENT"=>"","DEFAULT CHARSET"=""]
+    public $index=[];//["UNIQUE KEY `` (``)","PRIMARY KEY "]
+    public $cols =[];//["id"=>"`ID` int ","name"=>"`name` varchar"]
     public function __construct($name,$cols,$attr){ 
         $this->name = $name;
 

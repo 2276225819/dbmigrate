@@ -31,8 +31,8 @@ class DBSync{
 	 * @return void
 	 */
 	public function loadrt(){
-		foreach ($this->db->q("show tables") as $key => $value) { 
-            $row = $this->db->row("show create table {$value[0]}");  
+		foreach ($this->db->run("show tables") as $key => $value) { 
+            $row = $this->db->run("show create table {$value[0]}")->fetch();  
             $t = TableBlock::read($row[1]);  
 
             //TODO: 过滤熟悉
@@ -98,13 +98,25 @@ class DBSync{
     public function push($focus=false){  
 		$qs = $this->diff($focus);
 		foreach ($qs as $value) 
-			$this->db->q($value);  
+			$this->db->run($value);  
 		return count($qs);
     } 
 
 
-    public function command(){
-        
+    public function command($argv){
+        $path=@array_unshift($argv);//
+        $cmd =@array_unshift($argv);
+        switch ($cmd) {
+            case 'pull': return $this->pull(in_array('-f',$argv)); 
+            case 'push': return $this->push(in_array('-f',$argv));
+            default:
+                echo "Usage: php *.php [cmd] [-f]"  
+                ."\n  pull       从数据库拉取表结构到本地表结构"
+                ."\n        -f   覆盖本地表结构"
+                ."\n  push       将本地表结构推到数据库"
+                ."\n        -f   删除数据库多余表和字段"
+                ."\n";
+        }
     }
 }
 
