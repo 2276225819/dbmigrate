@@ -1,4 +1,4 @@
-<?php namespace DBMigrate;
+<?php namespace xlx;
 use \PDO;
 use \Exception;
 

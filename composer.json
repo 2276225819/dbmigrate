@@ -1,9 +1,9 @@
 {
     "name": "2276225819/dbmigrate",
-    "description": "database migrate", 
+    "description": "database sync", 
     "autoload":{
         "psr-4": {
-            "DBMigrate\\":"./src/"
+            "xlx\\":"./src/"
         }
     },
     "repositories": {

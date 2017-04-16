@@ -1,4 +1,4 @@
-<?php namespace DBMigrate;
+<?php namespace xlx;
 
 class TableBlock{
  
@@ -6,30 +6,32 @@ class TableBlock{
     public $attrs=[];//["ENGINE"=>"","AUTO_INCREMENT"=>"","DEFAULT CHARSET"=""]
     public $index=[];//["UNIQUE KEY `` (``)","PRIMARY KEY "]
     public $cols =[];//["id"=>"`ID` int ","name"=>"`name` varchar"]
-    public function __construct($name,$cols,$attr){ 
+    public function __construct($name,$cols=null,$attr=null){ 
         $this->name = $name;
 
-
-		preg_match_all('/DEFAULT CHARSET=\S+|\w+=\S+/',$attr,$arr);  
-		foreach ($arr[0] as $value) {
-			$arr = explode('=',$value,2); 
-			$this->attrs[trim($arr[0])]=trim($arr[1]);
-		} 
-        foreach ($cols as $str)  {
-            if($str = trim($str));else
-                continue;
-            if(strtolower(substr($str,0,11))=="primary key"
-            || strtolower(substr($str,0,10))=="unique key"
-            || strtolower(substr($str,0,3))=="key" ){ 
-                if(!in_array($str,$this->index)) 
-                    $this->index[]=$str;   
-            }else{ 
-                $of = preg_match('/^`?(\S+?)`?\s/',$str,$arr); 
-                if(!empty($arr[1]))
-					$this->cols[strtolower($arr[1])]="`{$arr[1]}` ".substr($str,strlen($arr[0]));
-				
-            }  
-        }  
+		if(!empty($attr)){
+			preg_match_all('/DEFAULT CHARSET=\S+|\w+=\S+/',$attr,$arr);  
+			foreach ($arr[0] as $value) {
+				$arr = explode('=',$value,2); 
+				$this->attrs[trim($arr[0])]=trim($arr[1]);
+			} 
+		}
+		if(!empty($cols)){
+			foreach ($cols as $str)  {
+				if($str = trim($str));else
+					continue;
+				if(strtolower(substr($str,0,11))=="primary key"
+				|| strtolower(substr($str,0,10))=="unique key"
+				|| strtolower(substr($str,0,3))=="key" ){ 
+					if(!in_array($str,$this->index)) 
+						$this->index[]=$str;   
+				}else{ 
+					$of = preg_match('/^`?(\S+?)`?\s/',$str,$arr); 
+					if(!empty($arr[1]))
+						$this->cols[strtolower($arr[1])]="`{$arr[1]}` ".substr($str,strlen($arr[0]));				
+				}  
+			}  
+		}
     }   
     public function __toString(){
         $str=""; $attr="";
@@ -55,17 +57,12 @@ class TableBlock{
         return new self($arr[1],$cols,$arr[3]); 
     }
 
-    public function mergeFrom(TableBlock $table){  
-        $this->index=array_merge_recursive($this->index,$table->index); 
-        $this->index=array_unique($this->index);
-		foreach ($table->cols as $name => $value) {
-			if(empty($this->cols[$name]))
-				$this->cols[$name]=$value; 
-		} 		
-		foreach ($table->attrs as $name => $value) {
-			if(empty($this->attrs[$name]))
-				$this->attrs[$name]=$value; 
-		} 
+    public function merge(TableBlock $table){  
+		$new = new TableBlock($table->name);
+        $new->index=array_unique(array_merge($table->index,$this->index));
+		$new->cols=array_unique(array_merge($table->cols,$this->cols));
+		$new->attrs=array_unique(array_merge($table->attrs,$this->attrs));
+		return $new;
     }
     public function diffFrom(TableBlock $remote=null){ 
 		if(empty($remote))

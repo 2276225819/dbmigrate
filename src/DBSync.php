@@ -1,4 +1,4 @@
-<?php namespace DBMigrate;
+<?php namespace xlx;
 use \PDO;
 
 class DBSync{ 
@@ -54,7 +54,7 @@ class DBSync{
  			if(empty($this->tables[$table->name]) || $focus){ 
                 $this->tables[$table->name] = $table;    
             } else{ 
-                $this->tables[$table->name]->mergeFrom($table);  
+                $this->tables[$table->name]=$table->merge($this->tables[$table->name]);  
             }
         }  
     } 
@@ -75,7 +75,15 @@ class DBSync{
 
 		return $qs??[];
 	}
- 
+	
+	/**
+	 * 退回到上一个版本（撤销操作）
+	 *
+	 * @return void
+	 */
+	public function reset(){
+
+	}
 
 
     /** 
@@ -100,24 +108,7 @@ class DBSync{
 		foreach ($qs as $value) 
 			$this->db->run($value);  
 		return count($qs);
-    } 
-
-
-    public function command($argv){
-        $path=@array_unshift($argv);//
-        $cmd =@array_unshift($argv);
-        switch ($cmd) {
-            case 'pull': return $this->pull(in_array('-f',$argv)); 
-            case 'push': return $this->push(in_array('-f',$argv));
-            default:
-                echo "Usage: php *.php [cmd] [-f]"  
-                ."\n  pull       从数据库拉取表结构到本地表结构"
-                ."\n        -f   覆盖本地表结构"
-                ."\n  push       将本地表结构推到数据库"
-                ."\n        -f   删除数据库多余表和字段"
-                ."\n";
-        }
-    }
+    }  
 }
 
 // $db = new DBSync(__DIR__."/dd.sql");  
