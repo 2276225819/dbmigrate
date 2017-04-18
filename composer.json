@@ -1,6 +1,9 @@
 {
     "name": "2276225819/dbmigrate",
     "description": "database sync", 
+	"requirt":{
+		"vrana/notorm":"*"
+	},
     "autoload":{
         "psr-4": {
             "xlx\\":"./src/"
